@@ -12,6 +12,7 @@ const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    subject: "",
     message: ""
   });
 
@@ -33,6 +34,7 @@ const Contact = () => {
       setFormData({
         name: "",
         email: "",
+        subject: "",
         message: ""
       });
     } catch (error) {
@@ -51,138 +53,125 @@ const Contact = () => {
   };
 
   return (
-    <div className="py-12 px-4">
-      <div className="container mx-auto max-w-4xl">
-        <h1 className="text-4xl font-heading font-bold text-center mb-8">
-          Contact Us
-        </h1>
-        <p className="text-xl text-muted-foreground text-center mb-12">
-          Have a question or want to place a custom order? We'd love to hear from you!
-        </p>
+    <div className="min-h-screen py-12 px-4 bg-gradient-to-br from-background to-accent/20">
+      <div className="container mx-auto max-w-2xl">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-heading font-bold mb-4 text-foreground">
+            Contact Us
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Have a question or want to place a custom order? We'd love to hear from you!
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Contact Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Send us a Message</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Modern Centered Contact Form */}
+        <Card className="shadow-xl border-0 bg-card/95 backdrop-blur-sm">
+          <CardHeader className="text-center pb-6">
+            <CardTitle className="text-2xl font-heading text-primary">
+              Send us a Message
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-8 pb-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium text-foreground">
+                  Full Name *
+                </Label>
+                <Input
+                  id="name"
+                  placeholder="Enter your full name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  className="h-11"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                  Email Address *
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email address"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  className="h-11"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subject" className="text-sm font-medium text-foreground">
+                  Subject *
+                </Label>
+                <Input
+                  id="subject"
+                  placeholder="What is this message about?"
+                  value={formData.subject}
+                  onChange={(e) => handleInputChange("subject", e.target.value)}
+                  className="h-11"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="message" className="text-sm font-medium text-foreground">
+                  Message *
+                </Label>
+                <Textarea
+                  id="message"
+                  placeholder="Tell us about your inquiry, custom order request, or feedback..."
+                  value={formData.message}
+                  onChange={(e) => handleInputChange("message", e.target.value)}
+                  rows={6}
+                  className="resize-none"
+                  required
+                />
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90 transition-all duration-200 transform hover:scale-[1.02]" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Sending Message...
+                  </div>
+                ) : (
+                  "Send Message"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Contact Information Section */}
+        <div className="mt-12 text-center">
+          <Card className="bg-card/50 border-accent/20">
+            <CardContent className="p-6">
+              <h3 className="font-heading font-semibold text-xl mb-4 text-primary">
+                Get in Touch
+              </h3>
+              <div className="grid md:grid-cols-3 gap-4 text-sm">
                 <div>
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    required
-                  />
+                  <h4 className="font-semibold mb-1">Email</h4>
+                  <p className="text-muted-foreground">hello@deliciousbakers.com</p>
                 </div>
-
                 <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    required
-                  />
+                  <h4 className="font-semibold mb-1">Phone</h4>
+                  <p className="text-muted-foreground">(555) 123-4567</p>
                 </div>
-
                 <div>
-                  <Label htmlFor="message">Message</Label>
-                  <Textarea
-                    id="message"
-                    placeholder="Tell us about your inquiry, custom order request, or feedback..."
-                    value={formData.message}
-                    onChange={(e) => handleInputChange("message", e.target.value)}
-                    rows={6}
-                    required
-                  />
+                  <h4 className="font-semibold mb-1">Follow Us</h4>
+                  <p className="text-muted-foreground">@deliciousbakers</p>
                 </div>
-
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Sending..." : "Send Message"}
-                </Button>
-              </form>
+              </div>
             </CardContent>
           </Card>
-
-          {/* Contact Information */}
-          <div className="space-y-8">
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-heading font-semibold text-xl mb-4">
-                  Get in Touch
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold mb-2">Phone</h4>
-                    <p className="text-muted-foreground">(555) 123-4567</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Email</h4>
-                    <p className="text-muted-foreground">hello@deliciousbakers.com</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Address</h4>
-                    <p className="text-muted-foreground">
-                      123 Bakery Lane<br />
-                      Sweet Town, ST 12345
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-heading font-semibold text-xl mb-4">
-                  Business Hours
-                </h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Monday - Friday</span>
-                    <span>8:00 AM - 6:00 PM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Saturday</span>
-                    <span>9:00 AM - 5:00 PM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Sunday</span>
-                    <span>10:00 AM - 4:00 PM</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-heading font-semibold text-xl mb-4">
-                  Follow Us
-                </h3>
-                <div className="space-y-2">
-                  <a
-                    href="https://instagram.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    📸 Instagram: @deliciousbakers
-                  </a>
-                  <a
-                    href="https://wa.me/1234567890"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    💬 WhatsApp: (555) 123-4567
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </div>
     </div>
