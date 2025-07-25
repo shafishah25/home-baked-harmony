@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
+import { CartButton } from "@/components/Cart/CartButton";
 
 const Header = () => {
   const location = useLocation();
@@ -60,9 +61,10 @@ const Header = () => {
           </nav>
 
           <div className="flex items-center space-x-4">
-            <Button asChild>
-              <Link to="/order">Order Now</Link>
-            </Button>
+          <CartButton />
+          <Button asChild>
+            <Link to="/order">Order Now</Link>
+          </Button>
           </div>
         </div>
       </div>

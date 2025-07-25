@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import { useCart } from "@/hooks/useCart";
+import { ShoppingCart } from "lucide-react";
 
 const Menu = () => {
   const [activeCategory, setActiveCategory] = useState("All");
+  const { addToCart } = useCart();
 
   const categories = ["All", "Cakes", "Cupcakes", "Cookies", "Bread", "Brownies"];
 
@@ -13,7 +16,7 @@ const Menu = () => {
       id: 1,
       name: "Chocolate Cake",
       description: "Rich, moist chocolate cake with chocolate frosting",
-      price: 25.00,
+      price: 2500,
       category: "Cakes",
       image: "/placeholder.svg",
       isFeatured: true
@@ -22,7 +25,7 @@ const Menu = () => {
       id: 2,
       name: "Vanilla Cupcakes",
       description: "Light and fluffy vanilla cupcakes with buttercream",
-      price: 18.00,
+      price: 1800,
       category: "Cupcakes",
       image: "/placeholder.svg",
       isFeatured: true
@@ -31,7 +34,7 @@ const Menu = () => {
       id: 3,
       name: "Chocolate Chip Cookies",
       description: "Classic cookies with premium chocolate chips",
-      price: 12.00,
+      price: 1200,
       category: "Cookies",
       image: "/placeholder.svg",
       isFeatured: false
@@ -40,7 +43,7 @@ const Menu = () => {
       id: 4,
       name: "Fresh Bread",
       description: "Artisan bread baked fresh daily",
-      price: 8.00,
+      price: 800,
       category: "Bread",
       image: "/placeholder.svg",
       isFeatured: false
@@ -49,7 +52,7 @@ const Menu = () => {
       id: 5,
       name: "Fudge Brownies",
       description: "Decadent brownies with a fudgy center",
-      price: 15.00,
+      price: 1500,
       category: "Brownies",
       image: "/placeholder.svg",
       isFeatured: false
@@ -58,7 +61,7 @@ const Menu = () => {
       id: 6,
       name: "Red Velvet Cake",
       description: "Classic red velvet with cream cheese frosting",
-      price: 28.00,
+      price: 2800,
       category: "Cakes",
       image: "/placeholder.svg",
       isFeatured: true
@@ -113,10 +116,19 @@ const Menu = () => {
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-semibold text-primary">
-                    ${product.price.toFixed(2)}
+                    Rs. {product.price}
                   </span>
-                  <Button size="sm" asChild>
-                    <Link to={`/order?product=${product.id}`}>Order Now</Link>
+                  <Button 
+                    size="sm"
+                    onClick={() => addToCart({
+                      id: product.id.toString(),
+                      name: product.name,
+                      price: product.price,
+                      category: product.category
+                    })}
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-1" />
+                    Add to Cart
                   </Button>
                 </div>
               </CardContent>
