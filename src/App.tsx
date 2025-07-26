@@ -11,6 +11,9 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import { CartProvider } from "./hooks/useCart";
+import Admin from "./pages/Admin";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const queryClient = new QueryClient();
 
@@ -28,10 +31,12 @@ const App = () => (
               <Route path="/order" element={<Order />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Layout>
+          {/* ✅ Correct placement of ToastContainer */}
+          <ToastContainer position="top-right" autoClose={3000} />
         </BrowserRouter>
       </CartProvider>
     </TooltipProvider>

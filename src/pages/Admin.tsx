@@ -1,292 +1,213 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { toast, ToastContainer } from "react-toastify";
+import { useCategories } from "@/hooks/useCatogories";
+import "react-toastify/dist/ReactToastify.css";
 
-const Admin = () => {
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("products");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [productForm, setProductForm] = useState({
-    name: "",
-    description: "",
-    price: "",
-    category: "",
-    imageUrl: "",
-    isFeatured: false
-  });
+type Product = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image_url: string;
+  is_featured: boolean; // ✅ Add is_featured
+};
 
-  // Mock data - in real app, this would come from Supabase
-  const orders = [
-    {
-      id: 1,
-      customerName: "John Doe",
-      email: "john@example.com",
-      product: "Chocolate Cake",
-      quantity: 1,
-      deliveryDate: "2024-07-30",
-      status: "pending"
-    },
-    {
-      id: 2,
-      customerName: "Jane Smith", 
-      email: "jane@example.com",
-      product: "Vanilla Cupcakes",
-      quantity: 2,
-      deliveryDate: "2024-07-31",
-      status: "confirmed"
+export default function Admin() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [category, setCategory] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [isFeatured, setIsFeatured] = useState(false); // ✅ checkbox state
+  const [loading, setLoading] = useState(false);
+
+  const { categories, loading: loadingCategories } = useCategories();
+
+  const fetchProducts = async () => {
+    const { data, error } = await supabase.from("products").select("*");
+    if (error) {
+      toast.error("Failed to fetch products");
+    } else {
+      setProducts(data);
     }
-  ];
+  };
 
-  const messages = [
-    {
-      id: 1,
-      name: "Alice Johnson",
-      email: "alice@example.com",
-      message: "I'd like to place a custom order for a birthday cake.",
-      timestamp: "2024-07-25 10:30 AM"
-    },
-    {
-      id: 2,
-      name: "Bob Wilson",
-      email: "bob@example.com", 
-      message: "Do you offer gluten-free options?",
-      timestamp: "2024-07-25 02:15 PM"
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const uploadImage = async (file: File) => {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const filePath = `products/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from("product-images")
+      .upload(filePath, file);
+
+    if (error) {
+      toast.error("Image upload failed");
+      throw error;
     }
-  ];
 
-  const handleProductSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+    const { data } = supabase.storage
+      .from("product-images")
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  const handleAddProduct = async () => {
+    if (!name || !description || !price || !category || !image) {
+      toast.error("Please fill all fields");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      // Here you would submit to Supabase products table
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Product Added!",
-        description: "The product has been successfully added to the menu.",
-      });
+      const imageUrl = await uploadImage(image);
+      const parsedPrice = parseFloat(price);
 
-      // Reset form
-      setProductForm({
-        name: "",
-        description: "",
-        price: "",
-        category: "",
-        imageUrl: "",
-        isFeatured: false
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add product. Please try again.",
-        variant: "destructive",
-      });
+      if (isNaN(parsedPrice)) {
+        toast.error("Invalid price format");
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.from("products").insert([
+        {
+          name,
+          description,
+          price: parsedPrice,
+          category,
+          image_url: imageUrl,
+          is_featured: isFeatured, // ✅ include featured value
+        },
+      ]);
+
+      if (error) {
+        toast.error("Failed to add product");
+      } else {
+        toast.success("Product added successfully");
+        setName("");
+        setDescription("");
+        setPrice("");
+        setCategory("");
+        setImage(null);
+        setIsFeatured(false);
+        fetchProducts();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong while uploading");
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="py-12 px-4">
-      <div className="container mx-auto max-w-6xl">
-        <h1 className="text-4xl font-heading font-bold text-center mb-8">
-          Admin Dashboard
-        </h1>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
 
-        {/* Tab Navigation */}
-        <div className="flex space-x-4 mb-8 border-b">
-          <button
-            onClick={() => setActiveTab("products")}
-            className={`pb-2 px-4 font-medium transition-colors ${
-              activeTab === "products"
-                ? "text-primary border-b-2 border-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Manage Products
-          </button>
-          <button
-            onClick={() => setActiveTab("orders")}
-            className={`pb-2 px-4 font-medium transition-colors ${
-              activeTab === "orders"
-                ? "text-primary border-b-2 border-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            View Orders
-          </button>
-          <button
-            onClick={() => setActiveTab("messages")}
-            className={`pb-2 px-4 font-medium transition-colors ${
-              activeTab === "messages"
-                ? "text-primary border-b-2 border-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Messages
-          </button>
+      {/* Add Product Form */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <Input
+          placeholder="Product Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <Input
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+        <Input
+          placeholder="Price"
+          type="number"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+        />
+
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="border rounded px-4 py-2 text-sm text-gray-700"
+        >
+          <option value="">Select Category</option>
+          {loadingCategories ? (
+            <option>Loading...</option>
+          ) : (
+            categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))
+          )}
+        </select>
+
+        <Input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            if (e.target.files && e.target.files[0]) {
+              setImage(e.target.files[0]);
+            }
+          }}
+        />
+
+        {/* ✅ Featured Checkbox */}
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="featured"
+            checked={isFeatured}
+            onChange={(e) => setIsFeatured(e.target.checked)}
+          />
+          <label htmlFor="featured" className="text-sm text-gray-700">
+            Mark as Featured Product
+          </label>
         </div>
+      </div>
 
-        {/* Products Tab */}
-        {activeTab === "products" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Add New Product</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleProductSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="productName">Product Name</Label>
-                    <Input
-                      id="productName"
-                      value={productForm.name}
-                      onChange={(e) => setProductForm({...productForm, name: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="price">Price ($)</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      value={productForm.price}
-                      onChange={(e) => setProductForm({...productForm, price: e.target.value})}
-                      required
-                    />
-                  </div>
-                </div>
+      <Button onClick={handleAddProduct} disabled={loading}>
+        {loading ? "Adding..." : "Add Product"}
+      </Button>
 
-                <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Select 
-                    value={productForm.category} 
-                    onValueChange={(value) => setProductForm({...productForm, category: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Cakes">Cakes</SelectItem>
-                      <SelectItem value="Cupcakes">Cupcakes</SelectItem>
-                      <SelectItem value="Cookies">Cookies</SelectItem>
-                      <SelectItem value="Bread">Bread</SelectItem>
-                      <SelectItem value="Brownies">Brownies</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={productForm.description}
-                    onChange={(e) => setProductForm({...productForm, description: e.target.value})}
-                    rows={3}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="imageUrl">Image URL</Label>
-                  <Input
-                    id="imageUrl"
-                    type="url"
-                    value={productForm.imageUrl}
-                    onChange={(e) => setProductForm({...productForm, imageUrl: e.target.value})}
-                    placeholder="https://example.com/image.jpg"
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="featured"
-                    checked={productForm.isFeatured}
-                    onChange={(e) => setProductForm({...productForm, isFeatured: e.target.checked})}
-                    className="rounded"
-                  />
-                  <Label htmlFor="featured">Featured Product</Label>
-                </div>
-
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Adding..." : "Add Product"}
-                </Button>
-              </form>
+      {/* Products List */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        {products.map((product) => (
+          <Card key={product.id}>
+            <CardContent className="p-4">
+              <img
+                src={
+                  product.image_url ||
+                  "https://via.placeholder.com/300x200?text=No+Image"
+                }
+                alt={product.name}
+                className="w-full h-40 object-cover rounded mb-3"
+              />
+              <h2 className="text-lg font-semibold">{product.name}</h2>
+              <p>{product.description}</p>
+              <p className="text-sm text-gray-600">Rs. {product.price}</p>
+              <p className="text-sm italic text-muted">{product.category}</p>
+              {product.is_featured && (
+                <p className="text-xs text-pink-600 font-semibold mt-1">
+                  ⭐ Featured Product
+                </p>
+              )}
             </CardContent>
           </Card>
-        )}
-
-        {/* Orders Tab */}
-        {activeTab === "orders" && (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-heading font-semibold">Recent Orders</h2>
-            {orders.map((order) => (
-              <Card key={order.id}>
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold">{order.customerName}</h3>
-                      <p className="text-muted-foreground">{order.email}</p>
-                      <p className="mt-2">
-                        <span className="font-medium">Product:</span> {order.product} x{order.quantity}
-                      </p>
-                      <p>
-                        <span className="font-medium">Delivery:</span> {order.deliveryDate}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded text-sm ${
-                        order.status === 'pending' 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        {order.status}
-                      </span>
-                      <Button size="sm" variant="outline">
-                        Update Status
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Messages Tab */}
-        {activeTab === "messages" && (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-heading font-semibold">Customer Messages</h2>
-            {messages.map((message) => (
-              <Card key={message.id}>
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="font-semibold">{message.name}</h3>
-                      <p className="text-muted-foreground">{message.email}</p>
-                    </div>
-                    <span className="text-sm text-muted-foreground">{message.timestamp}</span>
-                  </div>
-                  <p className="text-muted-foreground">{message.message}</p>
-                  <div className="mt-4">
-                    <Button size="sm">Reply</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        ))}
       </div>
+
+      <ToastContainer position="top-center" />
     </div>
   );
-};
-
-export default Admin;
+}
